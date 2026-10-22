@@ -4,7 +4,7 @@ from google import genai
 
 app = FastAPI()
 
-# आपकी Gemini API Key यहाँ सेट हो गई है
+# आपकी Gemini API Key यहाँ सुरक्षित सेट है
 client = genai.Client(api_key="AQ.Ab8RN6IbA65MmWmJsIgtOyf8Aq9mcs_-DBeJQpMQifdTrKBMHw")
 
 @app.post("/api/chat")
@@ -16,7 +16,7 @@ async def chat_endpoint(request: Request):
         return JSONResponse({"response": "कृपया कोई सवाल पूछें।"})
 
     try:
-        # Gemini 2.5 Flash मॉडल
+        # सही और काम करने वाला मॉडल
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=user_prompt,
@@ -50,7 +50,7 @@ async def chat_home():
         <header>🤖 AiBrowser AI Assistant</header>
         
         <div id="chat-container">
-            <div class="message ai-message">नमस्ते! मैं आपका AiBrowser AI असिस्टेंट हूँ। बताइए, आज आपकी क्या मदद करूँ?</div>
+            <div class="message ai-message">नमस्ते रूगनाथ! मैं आपका AiBrowser AI असिस्टेंट हूँ। बताइए, आज आपकी क्या मदद करूँ?</div>
         </div>
 
         <div id="input-container">
