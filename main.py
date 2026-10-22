@@ -1,14 +1,14 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
+import os
 import google.generativeai as genai
 
 app = FastAPI()
 
-# आपकी API Key यहाँ सेट है
-API_KEY = "AQ.Ab8RN6LIMWdWm6P3tZFkCgE0ttjjcUYgSM3jTyz94qAloolgGQ"
+# Render के Environment Variable से API Key अपने आप ले लेगा
+API_KEY = os.environ.get("GEMINI_API_KEY")
 genai.configure(api_key=API_KEY)
 
-# मॉडल कॉन्फ़िगरेशन
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 @app.post("/api/chat")
