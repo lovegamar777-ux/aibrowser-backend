@@ -1,15 +1,13 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 import os
-import google.generativeai as genai
+from google import genai
 
 app = FastAPI()
 
-# Render के Environment Variable से API Key अपने आप ले लेगा
+# नया Google GenAI SDK (नई AQ.Ab8RN... API Key फॉर्मेट को पूरा सपोर्ट करता है)
 API_KEY = os.environ.get("GEMINI_API_KEY")
-genai.configure(api_key=API_KEY)
-
-model = genai.GenerativeModel("gemini-1.5-flash")
+client = genai.Client(api_key=API_KEY)
 
 @app.post("/api/chat")
 async def chat_endpoint(request: Request):
@@ -20,7 +18,10 @@ async def chat_endpoint(request: Request):
         return JSONResponse({"response": "कृपया कोई सवाल पूछें।"})
 
     try:
-        response = model.generate_content(user_prompt)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=user_prompt,
+        )
         return JSONResponse({"response": response.text})
     except Exception as e:
         return JSONResponse({"response": f"एरर आया: {str(e)}"})
