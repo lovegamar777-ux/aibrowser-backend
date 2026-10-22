@@ -4,8 +4,8 @@ from google import genai
 
 app = FastAPI()
 
-# आपकी Gemini API Key यहाँ सेट है
-client = genai.Client(api_key="AQ.Ab8RN6IbA65MmWmJsIgtOyf8Aq9mcs_-DBeJQpMQifdTrKBMHw")
+# आपकी असली API Key यहाँ सेट हो गई है
+client = genai.Client(api_key="AQ.Ab8RN6LIMWdWm6P3tZFkCgE0ttjjcUYgSM3jTyz94qAloolgGQ")
 
 @app.post("/api/chat")
 async def chat_endpoint(request: Request):
@@ -16,9 +16,8 @@ async def chat_endpoint(request: Request):
         return JSONResponse({"response": "कृपया कोई सवाल पूछें।"})
 
     try:
-        # सही मॉडल 'gemini-3.8-flash' सेट कर दिया गया है
         response = client.models.generate_content(
-            model="gemini-3.8-flash",
+            model="gemini-2.5-flash",
             contents=user_prompt,
         )
         return JSONResponse({"response": response.text})
