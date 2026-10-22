@@ -17,9 +17,9 @@ async def chat_endpoint(request: Request):
         return JSONResponse({"response": "कृपया कोई सवाल पूछें।"})
 
     try:
-        # यहाँ मॉडल का नाम 'gemini-2.0-flash' सेट किया है जो इस की के साथ एकदम सटीक चलता है
+        # एरर के अनुसार सही और नया मॉडल नाम सेट किया है
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=user_prompt,
         )
         return JSONResponse({"response": response.text})
