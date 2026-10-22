@@ -5,7 +5,6 @@ from google import genai
 
 app = FastAPI()
 
-# नया Google GenAI SDK (नई AQ.Ab8RN... API Key फॉर्मेट को पूरा सपोर्ट करता है)
 API_KEY = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=API_KEY)
 
@@ -19,7 +18,7 @@ async def chat_endpoint(request: Request):
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=user_prompt,
         )
         return JSONResponse({"response": response.text})
