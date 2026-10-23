@@ -1,12 +1,11 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 import os
-from google import genai
+import requests
 
 app = FastAPI()
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=API_KEY)
 
 @app.post("/api/chat")
 async def chat_endpoint(request: Request):
@@ -16,23 +15,32 @@ async def chat_endpoint(request: Request):
     if not user_prompt:
         return JSONResponse({"response": "कृपया कोई सवाल पूछें।"})
 
+    if not API_KEY:
+        return JSONResponse({"response": "API Key सेट नहीं है।"})
+
+    # सीधे REST API को कॉल करना ताकि किसी SDK की निर्भरता न रहे
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "contents": [{
+            "parts": [{"text": user_prompt}]
+        }]
+    }
+
     try:
-        # मुख्य मॉडल
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=user_prompt,
-        )
-        return JSONResponse({"response": response.text})
+        res = requests.post(url, json=payload, headers=headers, timeout=15)
+        res_data = res.json()
+        
+        if res.status_code == 200:
+            ai_text = res_data['candidates'][0]['content']['parts'][0]['text']
+            return JSONResponse({"response": ai_text})
+        else:
+            # असली एरर जानने के लिए विवरण
+            error_msg = res_data.get('error', {}).get('message', 'अज्ञात एरर')
+            return JSONResponse({"response": f"API एरर: {error_msg}"})
+            
     except Exception as e:
-        # अगर 503 या ओवरलोड आए तो तुरंत 1.5-flash पर स्विच करेगा
-        try:
-            response = client.models.generate_content(
-                model="gemini-1.5-flash",
-                contents=user_prompt,
-            )
-            return JSONResponse({"response": response.text})
-        except Exception as e2:
-            return JSONResponse({"response": "गूगल सर्वर पर भारी ट्रैफिक है, कृपया 1 मिनट बाद दोबारा प्रयास करें।"})
+        return JSONResponse({"response": f"कनेक्शन एरर: {str(e)}"})
 
 @app.get("/", response_class=HTMLResponse)
 async def chat_home():
