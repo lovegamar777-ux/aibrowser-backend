@@ -13,13 +13,13 @@ async def chat_endpoint(request: Request):
     user_prompt = data.get("prompt", "")
     
     if not user_prompt:
-        return JSONResponse({"response": "कृपया कोई सवाल पूछें।"})
+        return JSONResponse({"response": "कृपया कोई सवाल पूछें।", "status": "error"})
 
     if not API_KEY:
-        return JSONResponse({"response": "API Key सेट नहीं है।"})
+        return JSONResponse({"response": "API Key सेट नहीं है।", "status": "error"})
 
-    # सीधे REST API को कॉल करना ताकि किसी SDK की निर्भरता न रहे
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+    # सही और लेटेस्ट v1 एंडपॉइंट (gemini-1.5-flash के लिए)
+    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={API_KEY}"
     headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [{
@@ -32,12 +32,14 @@ async def chat_endpoint(request: Request):
         res_data = res.json()
         
         if res.status_code == 200:
-            ai_text = res_data['candidates'][0]['content']['parts'][0]['text']
-            return JSONResponse({"response": ai_text})
+            try:
+                ai_text = res_data['candidates'][0]['content']['parts'][0]['text']
+                return JSONResponse({"response": ai_text})
+            except Exception as parse_err:
+                return JSONResponse({"response": f"डेटा पार्स करने में एरर: {str(parse_err)}"})
         else:
-            # असली एरर जानने के लिए विवरण
             error_msg = res_data.get('error', {}).get('message', 'अज्ञात एरर')
-            return JSONResponse({"response": f"API एरर: {error_msg}"})
+            return JSONResponse({"response": f"API एरर ({res.status_code}): {error_msg}"})
             
     except Exception as e:
         return JSONResponse({"response": f"कनेक्शन एरर: {str(e)}"})
