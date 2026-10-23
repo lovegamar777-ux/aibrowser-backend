@@ -5,7 +5,8 @@ import requests
 
 app = FastAPI()
 
-API_KEY = os.environ.get("GEMINI_API_KEY")
+# Render से XAI_API_KEY उठावे खातिर
+XAI_API_KEY = os.environ.get("XAI_API_KEY")
 
 @app.post("/api/chat")
 async def chat_endpoint(request: Request):
@@ -15,16 +16,21 @@ async def chat_endpoint(request: Request):
     if not user_prompt:
         return JSONResponse({"response": "कृपया कोई सवाल पूछें।", "status": "error"})
 
-    if not API_KEY:
-        return JSONResponse({"response": "API Key सेट नहीं है।", "status": "error"})
+    if not XAI_API_KEY:
+        return JSONResponse({"response": "xAI API Key सेट नहीं है।", "status": "error"})
 
-    # सही और लेटेस्ट v1 एंडपॉइंट (gemini-1.5-flash के लिए)
-    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={API_KEY}"
-    headers = {"Content-Type": "application/json"}
+    # xAI (Grok) के ऑफिशियल API एंडपॉइंट
+    url = "https://api.x.ai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {XAI_API_KEY}",
+        "Content-Type": "application/json"
+    }
     payload = {
-        "contents": [{
-            "parts": [{"text": user_prompt}]
-        }]
+        "model": "grok-beta",
+        "messages": [
+            {"role": "system", "content": "आप AiBrowser के एआई असिस्टेंट हैं। उपयोगकर्ता का नाम रूगनाथ है। हमेशा हिंदी में मदद करें।"},
+            {"role": "user", "content": user_prompt}
+        ]
     }
 
     try:
@@ -32,14 +38,11 @@ async def chat_endpoint(request: Request):
         res_data = res.json()
         
         if res.status_code == 200:
-            try:
-                ai_text = res_data['candidates'][0]['content']['parts'][0]['text']
-                return JSONResponse({"response": ai_text})
-            except Exception as parse_err:
-                return JSONResponse({"response": f"डेटा पार्स करने में एरर: {str(parse_err)}"})
+            ai_text = res_data['choices'][0]['message']['content']
+            return JSONResponse({"response": ai_text})
         else:
             error_msg = res_data.get('error', {}).get('message', 'अज्ञात एरर')
-            return JSONResponse({"response": f"API एरर ({res.status_code}): {error_msg}"})
+            return JSONResponse({"response": f"xAI API एरर: {error_msg}"})
             
     except Exception as e:
         return JSONResponse({"response": f"कनेक्शन एरर: {str(e)}"})
