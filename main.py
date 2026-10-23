@@ -17,14 +17,22 @@ async def chat_endpoint(request: Request):
         return JSONResponse({"response": "कृपया कोई सवाल पूछें।"})
 
     try:
-        # गूगल के एरर मैसेज के मुताबिक बिल्कुल नया और सही मॉडल नाम
+        # मुख्य मॉडल
         response = client.models.generate_content(
-            model="gemini-3.8-flash",
+            model="gemini-2.5-flash",
             contents=user_prompt,
         )
         return JSONResponse({"response": response.text})
     except Exception as e:
-        return JSONResponse({"response": f"एरर आया: {str(e)}"})
+        # अगर 503 या ओवरलोड आए तो तुरंत 1.5-flash पर स्विच करेगा
+        try:
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=user_prompt,
+            )
+            return JSONResponse({"response": response.text})
+        except Exception as e2:
+            return JSONResponse({"response": "गूगल सर्वर पर भारी ट्रैफिक है, कृपया 1 मिनट बाद दोबारा प्रयास करें।"})
 
 @app.get("/", response_class=HTMLResponse)
 async def chat_home():
