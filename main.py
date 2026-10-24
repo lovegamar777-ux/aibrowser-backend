@@ -5,7 +5,6 @@ import requests
 
 app = FastAPI()
 
-# Render से XAI_API_KEY उठावे खातिर
 XAI_API_KEY = os.environ.get("XAI_API_KEY")
 
 @app.post("/api/chat")
@@ -19,7 +18,6 @@ async def chat_endpoint(request: Request):
     if not XAI_API_KEY:
         return JSONResponse({"response": "xAI API Key सेट नहीं है।", "status": "error"})
 
-    # xAI (Grok) के ऑफिशियल API एंडपॉइंट
     url = "https://api.x.ai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {XAI_API_KEY}",
@@ -35,14 +33,24 @@ async def chat_endpoint(request: Request):
 
     try:
         res = requests.post(url, json=payload, headers=headers, timeout=15)
-        res_data = res.json()
         
+        try:
+            res_data = res.json()
+        except Exception:
+            res_data = res.text
+
         if res.status_code == 200:
-            ai_text = res_data['choices'][0]['message']['content']
-            return JSONResponse({"response": ai_text})
+            if isinstance(res_data, dict) and 'choices' in res_data:
+                ai_text = res_data['choices'][0]['message']['content']
+                return JSONResponse({"response": ai_text})
+            else:
+                return JSONResponse({"response": f"अमान्य रिस्पॉन्स: {res_data}"})
         else:
-            error_msg = res_data.get('error', {}).get('message', 'अज्ञात एरर')
-            return JSONResponse({"response": f"xAI API एरर: {error_msg}"})
+            if isinstance(res_data, dict):
+                error_msg = res_data.get('error', {}).get('message', str(res_data))
+            else:
+                error_msg = str(res_data)
+            return JSONResponse({"response": f"xAI API एरर ({res.status_code}): {error_msg}"})
             
     except Exception as e:
         return JSONResponse({"response": f"कनेक्शन एरर: {str(e)}"})
