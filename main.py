@@ -102,40 +102,42 @@ async def chat_home():
             
             #send-btn { background-color: #007bff; color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
             
-            /* प्रीमियम पॉपअप मेनू डिज़ाइन */
+            /* अति-प्रीमियम पॉपअप कार्ड डिज़ाइन */
             #upload-menu {
                 display: none;
                 position: absolute;
-                bottom: 70px;
-                left: 15px;
-                background: #ffffff;
-                border: none;
-                border-radius: 24px;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-                padding: 14px 18px;
+                bottom: 75px;
+                left: 16px;
+                right: 16px;
+                background: rgba(255, 255, 255, 0.96);
+                backdrop-filter: blur(12px);
+                border: 1px solid #e2e8f0;
+                border-radius: 22px;
+                box-shadow: 0 14px 36px rgba(0, 0, 0, 0.15);
+                padding: 16px;
                 display: flex;
-                gap: 16px;
-                z-index: 100;
+                justify-content: space-around;
                 align-items: center;
+                z-index: 100;
             }
             .menu-item {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                background: #f4f6f8;
-                border: none;
-                border-radius: 18px;
-                padding: 12px 16px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 12px 22px;
                 cursor: pointer;
                 transition: all 0.2s ease;
-                font-size: 13px;
-                font-weight: 500;
-                color: #333;
-                gap: 6px;
-                min-width: 65px;
+                font-size: 14px;
+                font-weight: 600;
+                color: #1e293b;
+                gap: 8px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.03);
             }
             .menu-item span {
-                font-size: 24px;
+                font-size: 26px;
             }
             .menu-item:active {
                 background: #e2e8f0;
@@ -158,7 +160,7 @@ async def chat_home():
         </div>
 
         <div class="input-wrapper">
-            <!-- प्लस बटन दबाने पर दिखने वाला पॉपअप मेनू -->
+            <!-- प्लस बटन दबाने पर दिखने वाला प्रीमियम पॉपअप मेनू -->
             <div id="upload-menu" style="display: none;">
                 <div class="menu-item" onclick="triggerPhoto()">
                     <span>🖼️</span> फ़ोटो
