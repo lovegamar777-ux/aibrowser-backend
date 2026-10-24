@@ -44,7 +44,7 @@ async def chat_endpoint(request: Request):
     url = "https://api.groq.com/openai/v1/chat/completions"
 
     messages = [
-        {"role": "system", "content": "आप AiBrowser के एडवांस एआई असिस्टेंट हैं। उपयोगकर्ता का नाम रूगनाथ है। हमेशा हिंदी में मदद करें।"}
+        {"role": "system", "content": "आप Jarvis हैं, AiBrowser के पर्सनल एआई असिस्टेंट। उपयोगकर्ता का नाम रूगनाथ है। हमेशा हिंदी में मदद करें।"}
     ]
 
     if image_data:
@@ -81,37 +81,68 @@ async def chat_home():
     <html lang="hi">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AiBrowser AI Chat</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <title>Jarvis AI Chat</title>
         <style>
-            * { box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+            * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+            body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
             header { background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-            #chat-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-            .message { padding: 12px 18px; border-radius: 15px; max-width: 80%; line-height: 1.5; word-wrap: break-word; font-size: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-            .user-message { background-color: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-            .ai-message { background-color: white; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #ddd; }
+            #chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+            .message { padding: 12px 18px; border-radius: 18px; max-width: 85%; line-height: 1.5; word-wrap: break-word; font-size: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+            .user-message { background-color: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+            .ai-message { background-color: white; color: #333; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #e0e0e0; }
             
-            .input-wrapper { padding: 15px; background: transparent; display: flex; justify-content: center; }
-            #input-container { display: flex; align-items: center; background-color: white; border: 1px solid #dcdcdc; border-radius: 30px; padding: 8px 15px; width: 100%; max-width: 700px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); gap: 10px; }
+            .input-wrapper { padding: 10px 15px; background: transparent; display: flex; justify-content: center; position: relative; }
+            #input-container { display: flex; align-items: center; background-color: white; border: 1px solid #dcdcdc; border-radius: 30px; padding: 6px 12px; width: 100%; max-width: 700px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); gap: 8px; }
             
-            #user-input { flex: 1; border: none; outline: none; font-size: 16px; background: transparent; color: #333; }
+            #user-input { flex: 1; border: none; outline: none; font-size: 16px; background: transparent; color: #333; padding: 8px 0; }
             
-            .icon-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #555; display: flex; align-items: center; justify-content: center; padding: 5px; border-radius: 50%; transition: background 0.2s; }
-            .icon-btn:hover { background-color: #f0f0f0; }
+            .icon-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: #555; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: 50%; width: 40px; height: 40px; }
+            .icon-btn:active { background-color: #f0f0f0; }
             
-            #send-btn { background-color: #007bff; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-            #send-btn:hover { background-color: #0056b3; }
+            #send-btn { background-color: #007bff; color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
             
-            #image-preview-container { padding: 0 20px; display: none; }
+            /* पॉपअप मेनू स्टाइल */
+            #upload-menu {
+                display: none;
+                position: absolute;
+                bottom: 75px;
+                left: 20px;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 16px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+                padding: 10px;
+                display: flex;
+                gap: 15px;
+                z-index: 100;
+            }
+            .menu-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                background: #f8f9fa;
+                border: 1px solid #e0e0e0;
+                border-radius: 12px;
+                padding: 10px 14px;
+                cursor: pointer;
+                transition: background 0.2s;
+                font-size: 13px;
+                color: #333;
+                gap: 5px;
+            }
+            .menu-item span { font-size: 22px; }
+            .menu-item:active { background: #e2e6ea; }
+
+            #image-preview-container { padding: 0 20px; display: none; margin-bottom: 5px; }
             #image-preview { max-width: 80px; max-height: 80px; border-radius: 8px; border: 1px solid #ddd; }
         </style>
     </head>
     <body>
-        <header>🤖 AiBrowser AI Assistant</header>
+        <header>🤖 Jarvis AI Assistant</header>
         
         <div id="chat-container">
-            <div class="message ai-message">नमस्ते रूगनाथ! मैं आपका AiBrowser एआई असिस्टेंट हूँ। बताइए, आज आपकी क्या मदद करूँ?</div>
+            <div class="message ai-message">नमस्ते रूगनाथ! मैं आपका Jarvis एआई असिस्टेंट हूँ। बताइए, आज आपकी क्या मदद करूँ?</div>
         </div>
 
         <div id="image-preview-container">
@@ -119,23 +150,53 @@ async def chat_home():
         </div>
 
         <div class="input-wrapper">
+            <!-- प्लस बटन दबाने पर दिखने वाला पॉपअप मेनू -->
+            <div id="upload-menu" style="display: none;">
+                <div class="menu-item" onclick="triggerPhoto()">
+                    <span>🖼️</span> फ़ोटो
+                </div>
+                <div class="menu-item" onclick="triggerCamera()">
+                    <span>📷</span> कैमरा
+                </div>
+                <div class="menu-item" onclick="triggerFile()">
+                    <span>📁</span> फ़ाइलें
+                </div>
+            </div>
+
             <div id="input-container">
                 <!-- बाईं तरफ प्लस (+) बटन -->
-                <button class="icon-btn" onclick="document.getElementById('image-file').click()" title="फोटो जोड़ें">➕</button>
-                <input type="file" id="image-file" accept="image/*" style="display: none;" onchange="previewImage(event)">
+                <button type="button" class="icon-btn" onclick="toggleUploadMenu(event)" title="जोड़ें">➕</i></button>
+                
+                <!-- हिडन फाइल इनपुट्स -->
+                <input type="file" id="file-photo" accept="image/*" style="display: none;" onchange="previewImage(event)">
+                <input type="file" id="file-camera" accept="image/*" capture="environment" style="display: none;" onchange="previewImage(event)">
+                <input type="file" id="file-any" accept="*/*" style="display: none;" onchange="previewImage(event)">
 
-                <input type="text" id="user-input" placeholder="Gemini से पूछें..." onkeypress="if(event.key==='Enter') sendMessage()" />
+                <input type="text" id="user-input" placeholder="Jarvis से पूछें..." onkeypress="if(event.key==='Enter') sendMessage()" />
 
-                <!-- दाईं तरफ माइक बटन -->
-                <button class="icon-btn" onclick="startVoiceInput()" title="बोलकर टाइप करें">🎙️</button>
-
-                <!-- भेजने का बटन -->
-                <button id="send-btn" onclick="sendMessage()" title="भेजें">➤</button>
+                <button type="button" class="icon-btn" id="mic-btn" onclick="startVoiceInput()" title="बोलकर टाइप करें">🎙️</button>
+                <button type="button" id="send-btn" onclick="sendMessage()" title="भेजें">➤</button>
             </div>
         </div>
 
         <script>
             let base64Image = null;
+
+            function toggleUploadMenu(event) {
+                event.stopPropagation();
+                const menu = document.getElementById('upload-menu');
+                menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+            }
+
+            // स्क्रीन पर कहीं भी क्लिक करने पर मेनू बंद हो जाएगा
+            window.onclick = function() {
+                const menu = document.getElementById('upload-menu');
+                if (menu) menu.style.display = 'none';
+            }
+
+            function triggerPhoto() { document.getElementById('file-photo').click(); }
+            function triggerCamera() { document.getElementById('file-camera').click(); }
+            function triggerFile() { document.getElementById('file-any').click(); }
 
             function previewImage(event) {
                 const file = event.target.files[0];
@@ -155,17 +216,26 @@ async def chat_home():
             function startVoiceInput() {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SpeechRecognition) {
-                    alert("आपका ब्राउज़र वॉइस रिकग्निशन सपोर्ट नहीं करता है।");
+                    alert("आपके ब्राउज़र में वॉइस इनपुट सपोर्ट नहीं है।");
                     return;
                 }
-                const recognition = new SpeechRecognition();
-                recognition.lang = 'hi-IN';
-                recognition.start();
+                try {
+                    const recognition = new SpeechRecognition();
+                    recognition.lang = 'hi-IN';
+                    const micBtn = document.getElementById('mic-btn');
+                    micBtn.style.color = 'red';
 
-                recognition.onresult = function(event) {
-                    const speechText = event.results[0][0].transcript;
-                    document.getElementById('user-input').value = speechText;
-                };
+                    recognition.onresult = function(event) {
+                        const speechText = event.results[0][0].transcript;
+                        document.getElementById('user-input').value = speechText;
+                        micBtn.style.color = '#555';
+                    };
+                    recognition.onerror = function() { micBtn.style.color = '#555'; };
+                    recognition.onend = function() { micBtn.style.color = '#555'; };
+                    recognition.start();
+                } catch(e) {
+                    alert("माइक्रोफोन एरर: " + e.message);
+                }
             }
 
             function speakText(text) {
@@ -185,7 +255,7 @@ async def chat_home():
 
                 const userMsg = document.createElement('div');
                 userMsg.className = 'message user-message';
-                userMsg.innerText = text + (base64Image ? " [फोटो संलग्न]" : "");
+                userMsg.innerText = text + (base64Image ? " [फाइल/फोटो संलग्न]" : "");
                 chatContainer.appendChild(userMsg);
 
                 const currentImage = base64Image;
