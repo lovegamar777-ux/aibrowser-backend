@@ -27,7 +27,7 @@ def get_active_groq_model(headers):
 async def chat_endpoint(request: Request):
     data = await request.json()
     user_prompt = data.get("prompt", "")
-    image_data = data.get("image", None) # अगर यूजर ने फोटो भेजी हो
+    image_data = data.get("image", None)
     
     if not user_prompt and not image_data:
         return JSONResponse({"response": "कृपया कोई सवाल पूछें या फोटो अपलोड करें।", "status": "error"})
@@ -48,7 +48,6 @@ async def chat_endpoint(request: Request):
     ]
 
     if image_data:
-        # अगर इमेज है तो विजन फॉर्मेट में भेजेंगे
         messages.append({
             "role": "user",
             "content": [
@@ -86,48 +85,53 @@ async def chat_home():
         <title>AiBrowser AI Chat</title>
         <style>
             * { box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #e9ecef; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
             header { background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
             #chat-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
             .message { padding: 12px 18px; border-radius: 15px; max-width: 80%; line-height: 1.5; word-wrap: break-word; font-size: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
             .user-message { background-color: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
             .ai-message { background-color: white; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #ddd; }
             
-            #input-container { display: flex; align-items: center; padding: 12px; background-color: white; border-top: 1px solid #ddd; gap: 10px; }
-            #user-input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 25px; outline: none; font-size: 16px; transition: border 0.3s; }
-            #user-input:focus { border-color: #007bff; }
+            .input-wrapper { padding: 15px; background: transparent; display: flex; justify-content: center; }
+            #input-container { display: flex; align-items: center; background-color: white; border: 1px solid #dcdcdc; border-radius: 30px; padding: 8px 15px; width: 100%; max-width: 700px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); gap: 10px; }
             
-            .action-btn { background-color: #f8f9fa; border: 1px solid #ccc; color: #333; padding: 10px 14px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
-            .action-btn:hover { background-color: #e2e6ea; }
-            #send-btn { background-color: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 16px; font-weight: bold; }
+            #user-input { flex: 1; border: none; outline: none; font-size: 16px; background: transparent; color: #333; }
+            
+            .icon-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #555; display: flex; align-items: center; justify-content: center; padding: 5px; border-radius: 50%; transition: background 0.2s; }
+            .icon-btn:hover { background-color: #f0f0f0; }
+            
+            #send-btn { background-color: #007bff; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
             #send-btn:hover { background-color: #0056b3; }
             
-            #image-preview { max-width: 100px; max-height: 100px; display: none; border-radius: 8px; margin-bottom: 5px; border: 1px solid #ddd; }
+            #image-preview-container { padding: 0 20px; display: none; }
+            #image-preview { max-width: 80px; max-height: 80px; border-radius: 8px; border: 1px solid #ddd; }
         </style>
     </head>
     <body>
-        <header>🚀 AiBrowser AI Assistant</header>
+        <header>🤖 AiBrowser AI Assistant</header>
         
         <div id="chat-container">
-            <div class="message ai-message">नमस्ते रूगनाथ! मैं आपका AiBrowser एआई असिस्टेंट हूँ। अब आप मुझसे बोलकर, लिखकर या फोटो भेजकर बात कर सकते हैं। बताइए, आज क्या मदद करूँ?</div>
+            <div class="message ai-message">नमस्ते रूगनाथ! मैं आपका AiBrowser एआई असिस्टेंट हूँ। बताइए, आज आपकी क्या मदद करूँ?</div>
         </div>
 
-        <div style="padding: 0 15px;">
+        <div id="image-preview-container">
             <img id="image-preview" src="" alt="Preview" />
         </div>
 
-        <div id="input-container">
-            <!-- फोटो अपलोड बटन -->
-            <label class="action-btn" title="फोटो अपलोड करें">
-                📷 <input type="file" id="image-file" accept="image/*" style="display: none;" onchange="previewImage(event)">
-            </label>
-            
-            <!-- वॉयस इनपुट (बोलकर टाइप करने के लिए) -->
-            <button class="action-btn" onclick="startVoiceInput()" title="बोलकर टाइप करें">🎙️</button>
+        <div class="input-wrapper">
+            <div id="input-container">
+                <!-- बाईं तरफ प्लस (+) बटन -->
+                <button class="icon-btn" onclick="document.getElementById('image-file').click()" title="फोटो जोड़ें">➕</button>
+                <input type="file" id="image-file" accept="image/*" style="display: none;" onchange="previewImage(event)">
 
-            <input type="text" id="user-input" placeholder="यहाँ अपना सवाल लिखें..." onkeypress="if(event.key==='Enter') sendMessage()" />
-            
-            <button id="send-btn" onclick="sendMessage()">भेजें</button>
+                <input type="text" id="user-input" placeholder="Gemini से पूछें..." onkeypress="if(event.key==='Enter') sendMessage()" />
+
+                <!-- दाईं तरफ माइक बटन -->
+                <button class="icon-btn" onclick="startVoiceInput()" title="बोलकर टाइप करें">🎙️</button>
+
+                <!-- भेजने का बटन -->
+                <button id="send-btn" onclick="sendMessage()" title="भेजें">➤</button>
+            </div>
         </div>
 
         <script>
@@ -139,15 +143,15 @@ async def chat_home():
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         base64Image = e.target.result;
+                        const previewContainer = document.getElementById('image-preview-container');
                         const preview = document.getElementById('image-preview');
                         preview.src = base64Image;
-                        preview.style.display = 'block';
+                        previewContainer.style.display = 'block';
                     };
                     reader.readAsDataURL(file);
                 }
             }
 
-            // बोलकर टाइप करने का फीचर (Speech to Text)
             function startVoiceInput() {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SpeechRecognition) {
@@ -155,7 +159,7 @@ async def chat_home():
                     return;
                 }
                 const recognition = new SpeechRecognition();
-                recognition.lang = 'hi-IN'; // हिंदी भाषा
+                recognition.lang = 'hi-IN';
                 recognition.start();
 
                 recognition.onresult = function(event) {
@@ -164,7 +168,6 @@ async def chat_home():
                 };
             }
 
-            // एआई की आवाज में बोलकर बताने का फीचर (Text to Speech)
             function speakText(text) {
                 if ('speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance(text);
@@ -180,7 +183,6 @@ async def chat_home():
 
                 const chatContainer = document.getElementById('chat-container');
 
-                // यूजर का मैसेज स्क्रीन पर दिखाएं
                 const userMsg = document.createElement('div');
                 userMsg.className = 'message user-message';
                 userMsg.innerText = text + (base64Image ? " [फोटो संलग्न]" : "");
@@ -189,7 +191,7 @@ async def chat_home():
                 const currentImage = base64Image;
                 input.value = '';
                 base64Image = null;
-                document.getElementById('image-preview').style.display = 'none';
+                document.getElementById('image-preview-container').style.display = 'none';
                 chatContainer.scrollTop = chatContainer.scrollHeight;
 
                 const loadingMsg = document.createElement('div');
@@ -206,8 +208,6 @@ async def chat_home():
                     });
                     const data = await response.json();
                     loadingMsg.innerText = data.response;
-                    
-                    // एआई का जवाब बोलकर भी सुनाएगा
                     speakText(data.response);
                 } catch (err) {
                     loadingMsg.innerText = "माफ कीजिये, सर्वर से जवाब नहीं मिल सका।";
