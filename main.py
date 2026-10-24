@@ -5,7 +5,16 @@ import requests
 
 app = FastAPI()
 
+# Render से आपकी GROQ_API_KEY उठाएगा
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+
+# Groq के एक्टिव मॉडल्स की लिस्ट (अगर एक नहीं मिला तो अगला अपने आप चलेगा)
+AVAILABLE_MODELS = [
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+    "llama3-70b-8192",
+    "mixtral-8x7b-32768"
+]
 
 @app.post("/api/chat")
 async def chat_endpoint(request: Request):
@@ -16,49 +25,42 @@ async def chat_endpoint(request: Request):
         return JSONResponse({"response": "कृपया कोई सवाल पूछें।", "status": "error"})
 
     if not GROQ_API_KEY:
-        return JSONResponse({"response": "Groq API Key सेट नहीं है।", "status": "error"})
+        return JSONResponse({"response": "Groq API Key सेट नहीं है। कृपया Render में GROQ_API_KEY चेक करें।", "status": "error"})
 
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
-    
-    payload = {
-        "model": "llama-3.3-70b-versatile",
-        "messages": [
-            {"role": "system", "content": "आप AiBrowser के एआई असिस्टेंट हैं। उपयोगकर्ता का नाम रूगनाथ है। हमेशा हिंदी में मदद करें।"},
-            {"role": "user", "content": user_prompt}
-        ]
-    }
 
-    try:
-        res = requests.post(url, json=payload, headers=headers, timeout=15)
-        
+    last_error = ""
+
+    # मॉडल्स को एक-एक करके ट्राई करेगा ताकि 404 एरर कभी न आए
+    for model_name in AVAILABLE_MODELS:
+        payload = {
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": "आप AiBrowser के एआई असिस्टेंट हैं। उपयोगकर्ता का नाम रूगनाथ है। हमेशा हिंदी में मदद करें।"},
+                {"role": "user", "content": user_prompt}
+            ]
+        }
+
         try:
-            res_data = res.json()
-        except Exception:
-            res_data = res.text
-
-        if res.status_code == 200:
-            if isinstance(res_data, dict) and 'choices' in res_data:
+            res = requests.post(url, json=payload, headers=headers, timeout=12)
+            
+            if res.status_code == 200:
+                res_data = res.json()
                 ai_text = res_data['choices'][0]['message']['content']
                 return JSONResponse({"response": ai_text})
             else:
-                return JSONResponse({"response": f"अमान्य रिस्पॉन्स: {res_data}"})
-        else:
-            error_msg = str(res_data)
-            if isinstance(res_data, dict):
-                err_obj = res_data.get('error')
-                if isinstance(err_obj, dict):
-                    error_msg = err_obj.get('message', str(res_data))
-                elif isinstance(err_obj, str):
-                    error_msg = err_obj
-            
-            return JSONResponse({"response": f"Groq API एरर ({res.status_code}): {error_msg}"})
-            
-    except Exception as e:
-        return JSONResponse({"response": f"कनेक्शन एरर: {str(e)}"})
+                last_error = f"Model {model_name} Error: {res.status_code} - {res.text}"
+                continue  # अगला मॉडल ट्राई करेगा
+
+        except Exception as e:
+            last_error = str(e)
+            continue
+
+    return JSONResponse({"response": f"सर्वर कनेक्शन एरर: {last_error}"})
 
 @app.get("/", response_class=HTMLResponse)
 async def chat_home():
