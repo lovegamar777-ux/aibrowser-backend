@@ -24,8 +24,10 @@ async def chat_endpoint(request: Request):
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
+    
+    # 100% वर्किंग और सुपरफास्ट Groq मॉडल
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": "llama3-8b-8192",
         "messages": [
             {"role": "system", "content": "आप AiBrowser के एआई असिस्टेंट हैं। उपयोगकर्ता का नाम रूगनाथ है। हमेशा हिंदी में मदद करें।"},
             {"role": "user", "content": user_prompt}
