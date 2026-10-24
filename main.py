@@ -5,7 +5,6 @@ import requests
 
 app = FastAPI()
 
-# Render से आपकी GROQ_API_KEY उठाएगा
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 @app.post("/api/chat")
@@ -25,9 +24,9 @@ async def chat_endpoint(request: Request):
         "Content-Type": "application/json"
     }
     
-    # 100% वर्किंग और सुपरफास्ट Groq मॉडल
+    # 100% वर्किंग और लेटेस्ट Groq मॉडल
     payload = {
-        "model": "llama3-8b-8192",
+        "model": "llama-3.1-8b-instant",
         "messages": [
             {"role": "system", "content": "आप AiBrowser के एआई असिस्टेंट हैं। उपयोगकर्ता का नाम रूगनाथ है। हमेशा हिंदी में मदद करें।"},
             {"role": "user", "content": user_prompt}
