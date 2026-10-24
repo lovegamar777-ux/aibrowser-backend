@@ -46,10 +46,15 @@ async def chat_endpoint(request: Request):
             else:
                 return JSONResponse({"response": f"अमान्य रिस्पॉन्स: {res_data}"})
         else:
+            # सुरक्षित तरीके से एरर मैसेज निकालना ताकि क्रैश न हो
+            error_msg = str(res_data)
             if isinstance(res_data, dict):
-                error_msg = res_data.get('error', {}).get('message', str(res_data))
-            else:
-                error_msg = str(res_data)
+                err_obj = res_data.get('error')
+                if isinstance(err_obj, dict):
+                    error_msg = err_obj.get('message', str(res_data))
+                elif isinstance(err_obj, str):
+                    error_msg = err_obj
+            
             return JSONResponse({"response": f"xAI API एरर ({res.status_code}): {error_msg}"})
             
     except Exception as e:
