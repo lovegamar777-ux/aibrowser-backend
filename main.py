@@ -5,7 +5,8 @@ import requests
 
 app = FastAPI()
 
-XAI_API_KEY = os.environ.get("XAI_API_KEY")
+# Render से आपकी GROQ_API_KEY उठाएगा
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 @app.post("/api/chat")
 async def chat_endpoint(request: Request):
@@ -15,16 +16,16 @@ async def chat_endpoint(request: Request):
     if not user_prompt:
         return JSONResponse({"response": "कृपया कोई सवाल पूछें।", "status": "error"})
 
-    if not XAI_API_KEY:
-        return JSONResponse({"response": "xAI API Key सेट नहीं है।", "status": "error"})
+    if not GROQ_API_KEY:
+        return JSONResponse({"response": "Groq API Key सेट नहीं है।", "status": "error"})
 
-    url = "https://api.x.ai/v1/chat/completions"
+    url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
-        "Authorization": f"Bearer {XAI_API_KEY}",
+        "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "grok-beta",
+        "model": "llama-3.3-70b-versatile",
         "messages": [
             {"role": "system", "content": "आप AiBrowser के एआई असिस्टेंट हैं। उपयोगकर्ता का नाम रूगनाथ है। हमेशा हिंदी में मदद करें।"},
             {"role": "user", "content": user_prompt}
@@ -46,7 +47,6 @@ async def chat_endpoint(request: Request):
             else:
                 return JSONResponse({"response": f"अमान्य रिस्पॉन्स: {res_data}"})
         else:
-            # सुरक्षित तरीके से एरर मैसेज निकालना ताकि क्रैश न हो
             error_msg = str(res_data)
             if isinstance(res_data, dict):
                 err_obj = res_data.get('error')
@@ -55,7 +55,7 @@ async def chat_endpoint(request: Request):
                 elif isinstance(err_obj, str):
                     error_msg = err_obj
             
-            return JSONResponse({"response": f"xAI API एरर ({res.status_code}): {error_msg}"})
+            return JSONResponse({"response": f"Groq API एरर ({res.status_code}): {error_msg}"})
             
     except Exception as e:
         return JSONResponse({"response": f"कनेक्शन एरर: {str(e)}"})
