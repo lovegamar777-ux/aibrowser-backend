@@ -8,13 +8,28 @@ app = FastAPI()
 # Render से आपकी GROQ_API_KEY उठाएगा
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-# Groq के एक्टिव मॉडल्स की लिस्ट (अगर एक नहीं मिला तो अगला अपने आप चलेगा)
-AVAILABLE_MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant",
-    "llama3-70b-8192",
-    "mixtral-8x7b-32768"
-]
+def get_active_groq_model(headers):
+    """Groq से वर्तमान में एक्टिव मॉडल्स की लिस्ट अपने आप मांगता है"""
+    try:
+        models_url = "https://api.groq.com/openai/v1/models"
+        res = requests.get(models_url, headers=headers, timeout=5)
+        if res.status_code == 200:
+            data = res.json()
+            model_list = [m['id'] for m in data.get('data', [])]
+            
+            # प्राथमिकता वाले एक्टिव मॉडल चुनें
+            for preferred in ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "qwen/qwen3.8-27b"]:
+                if preferred in model_list:
+                    return preferred
+            
+            # अगर कोई नहीं तो लिस्ट का पहला चालू मॉडल ले लो
+            if model_list:
+                return model_list[0]
+    except Exception:
+        pass
+    
+    # फॉलबैक डिफ़ॉल्ट मॉडल
+    return "openai/gpt-oss-20b"
 
 @app.post("/api/chat")
 async def chat_endpoint(request: Request):
@@ -27,40 +42,35 @@ async def chat_endpoint(request: Request):
     if not GROQ_API_KEY:
         return JSONResponse({"response": "Groq API Key सेट नहीं है। कृपया Render में GROQ_API_KEY चेक करें।", "status": "error"})
 
-    url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
 
-    last_error = ""
+    # अपने आप चालू (Active) मॉडल ढूँढेगा
+    active_model = get_active_groq_model(headers)
 
-    # मॉडल्स को एक-एक करके ट्राई करेगा ताकि 404 एरर कभी न आए
-    for model_name in AVAILABLE_MODELS:
-        payload = {
-            "model": model_name,
-            "messages": [
-                {"role": "system", "content": "आप AiBrowser के एआई असिस्टेंट हैं। उपयोगकर्ता का नाम रूगनाथ है। हमेशा हिंदी में मदद करें।"},
-                {"role": "user", "content": user_prompt}
-            ]
-        }
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    payload = {
+        "model": active_model,
+        "messages": [
+            {"role": "system", "content": "आप AiBrowser के एआई असिस्टेंट हैं। उपयोगकर्ता का नाम रूगनाथ है। हमेशा हिंदी में मदद करें।"},
+            {"role": "user", "content": user_prompt}
+        ]
+    }
 
-        try:
-            res = requests.post(url, json=payload, headers=headers, timeout=12)
-            
-            if res.status_code == 200:
-                res_data = res.json()
-                ai_text = res_data['choices'][0]['message']['content']
-                return JSONResponse({"response": ai_text})
-            else:
-                last_error = f"Model {model_name} Error: {res.status_code} - {res.text}"
-                continue  # अगला मॉडल ट्राई करेगा
+    try:
+        res = requests.post(url, json=payload, headers=headers, timeout=15)
+        
+        if res.status_code == 200:
+            res_data = res.json()
+            ai_text = res_data['choices'][0]['message']['content']
+            return JSONResponse({"response": ai_text})
+        else:
+            return JSONResponse({"response": f"Groq API एरर ({res.status_code}): {res.text}"})
 
-        except Exception as e:
-            last_error = str(e)
-            continue
-
-    return JSONResponse({"response": f"सर्वर कनेक्शन एरर: {last_error}"})
+    except Exception as e:
+        return JSONResponse({"response": f"कनेक्शन एरर: {str(e)}"})
 
 @app.get("/", response_class=HTMLResponse)
 async def chat_home():
