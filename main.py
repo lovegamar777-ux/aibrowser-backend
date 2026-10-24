@@ -102,37 +102,45 @@ async def chat_home():
             
             #send-btn { background-color: #007bff; color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
             
-            /* पॉपअप मेनू स्टाइल */
+            /* प्रीमियम पॉपअप मेनू डिज़ाइन */
             #upload-menu {
                 display: none;
                 position: absolute;
-                bottom: 75px;
-                left: 20px;
-                background: white;
-                border: 1px solid #ddd;
-                border-radius: 16px;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-                padding: 10px;
+                bottom: 70px;
+                left: 15px;
+                background: #ffffff;
+                border: none;
+                border-radius: 24px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+                padding: 14px 18px;
                 display: flex;
-                gap: 15px;
+                gap: 16px;
                 z-index: 100;
+                align-items: center;
             }
             .menu-item {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                background: #f8f9fa;
-                border: 1px solid #e0e0e0;
-                border-radius: 12px;
-                padding: 10px 14px;
+                background: #f4f6f8;
+                border: none;
+                border-radius: 18px;
+                padding: 12px 16px;
                 cursor: pointer;
-                transition: background 0.2s;
+                transition: all 0.2s ease;
                 font-size: 13px;
+                font-weight: 500;
                 color: #333;
-                gap: 5px;
+                gap: 6px;
+                min-width: 65px;
             }
-            .menu-item span { font-size: 22px; }
-            .menu-item:active { background: #e2e6ea; }
+            .menu-item span {
+                font-size: 24px;
+            }
+            .menu-item:active {
+                background: #e2e8f0;
+                transform: scale(0.95);
+            }
 
             #image-preview-container { padding: 0 20px; display: none; margin-bottom: 5px; }
             #image-preview { max-width: 80px; max-height: 80px; border-radius: 8px; border: 1px solid #ddd; }
@@ -165,7 +173,7 @@ async def chat_home():
 
             <div id="input-container">
                 <!-- बाईं तरफ प्लस (+) बटन -->
-                <button type="button" class="icon-btn" onclick="toggleUploadMenu(event)" title="जोड़ें">➕</i></button>
+                <button type="button" class="icon-btn" onclick="toggleUploadMenu(event)" title="जोड़ें">➕</button>
                 
                 <!-- हिडन फाइल इनपुट्स -->
                 <input type="file" id="file-photo" accept="image/*" style="display: none;" onchange="previewImage(event)">
@@ -188,7 +196,6 @@ async def chat_home():
                 menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
             }
 
-            // स्क्रीन पर कहीं भी क्लिक करने पर मेनू बंद हो जाएगा
             window.onclick = function() {
                 const menu = document.getElementById('upload-menu');
                 if (menu) menu.style.display = 'none';
